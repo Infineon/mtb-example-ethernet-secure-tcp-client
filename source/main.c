@@ -7,7 +7,7 @@
 * Related Document: See Readme.md
 *
 *******************************************************************************
-* Copyright 2019-2022, Cypress Semiconductor Corporation (an Infineon company) or
+* Copyright 2019-2024, Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
 *
 * This software, including source code, documentation and related
@@ -104,7 +104,7 @@ int main()
     printf("===============================================================\n");
     printf("             CE235601 - Ethernet:Secure TCP Client             \n");
     printf("===============================================================\n\n");
-
+    
     /* Create the tasks */
     xTaskCreate(tcp_secure_client_task, "Network task", TCP_SECURE_CLIENT_TASK_STACK_SIZE,
                 NULL, TCP_SECURE_CLIENT_TASK_PRIORITY, NULL);

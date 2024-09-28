@@ -5,7 +5,7 @@
 * client operation.
 *
 *******************************************************************************
-* Copyright 2022, Cypress Semiconductor Corporation (an Infineon company) or
+* Copyright 2022-2024, Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
 *
 * This software, including source code, documentation and related
@@ -69,6 +69,7 @@
 /* Network credentials header file */
 #include "network_credentials.h"
 
+#include "cy_eth_phy_driver.h"
 /******************************************************************************
 * Macros
 ******************************************************************************/
@@ -82,6 +83,12 @@
 /* Maximum number of connection retries to the ethernet network */
 #define MAX_ETH_RETRY_COUNT                            (3u)
 
+/* Ethernet interface ID */
+#ifdef XMC7100D_F176K4160
+#define INTERFACE_ID                        CY_ECM_INTERFACE_ETH0
+#else
+#define INTERFACE_ID                        CY_ECM_INTERFACE_ETH1
+#endif
 /******************************************************************************
 * Function Prototypes
 ******************************************************************************/
@@ -245,6 +252,18 @@ void tcp_secure_client_task(void *arg)
     }
  }
 
+cy_ecm_phy_callbacks_t phy_callbacks =
+{
+        .phy_init = cy_eth_phy_init,
+        .phy_configure = cy_eth_phy_configure,
+        .phy_enable_ext_reg = cy_eth_phy_enable_ext_reg,
+        .phy_discover = cy_eth_phy_discover,
+        .phy_get_auto_neg_status = cy_eth_phy_get_auto_neg_status,
+        .phy_get_link_partner_cap = cy_eth_phy_get_link_partner_cap,
+        .phy_get_linkspeed = cy_eth_phy_get_linkspeed,
+        .phy_get_linkstatus = cy_eth_phy_get_linkstatus,
+        .phy_reset = cy_eth_phy_reset
+};
 
 /*******************************************************************************
  * Function Name: connect_to_ethernet
@@ -267,7 +286,6 @@ cy_rslt_t connect_to_ethernet(void)
     uint8_t retry_count = 0;
 
     /* Variables used by ethernet connection manager.*/
-    cy_ecm_phy_config_t ecm_phy_config;
     cy_ecm_ip_address_t ip_addr;
 
     /* Initialize ethernet connection manager. */
@@ -282,14 +300,8 @@ cy_rslt_t connect_to_ethernet(void)
         printf("Ethernet connection manager initialized.\n");
     }
 
-    ecm_phy_config.interface_speed_type = CY_ECM_SPEED_TYPE_RGMII;
-    ecm_phy_config.mode = CY_ECM_DUPLEX_AUTO;
-    ecm_phy_config.phy_speed = CY_ECM_PHY_SPEED_AUTO;
-
-    /* To change the MAC address,enter the desired MAC as the second parameter 
-    in cy_ecm_ethif_init() instead of NULL. Default MAC address(00-03-19-45-00-00) 
-    is used when NULL is passed. */
-    result =  cy_ecm_ethif_init(CY_ECM_INTERFACE_ETH1, NULL, &ecm_phy_config, &ecm_handle);
+    /* Initialize the Ethernet Interface and PHY driver */
+    result =  cy_ecm_ethif_init(INTERFACE_ID, &phy_callbacks, &ecm_handle);
     if (result != CY_RSLT_SUCCESS)
     {
         printf("Ethernet interface initialization failed! Error code: 0x%08"PRIx32"\n", (uint32_t)result);
